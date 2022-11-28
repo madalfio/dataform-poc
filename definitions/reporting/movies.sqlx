@@ -1,0 +1,33 @@
+config { 
+  type: 'view',
+  tags: ["view"],
+  schema: "imdb_transformed"
+}
+
+select 
+tb.tconst as id,
+tb.primary_title as title,
+tb.start_year as release_year,
+array(
+  select struct(
+    d.director_id,
+    nb.primary_name
+  )
+  from ${ ref('directors')} as d 
+  inner join ${ ref('name_basics')} as nb on nb.nconst = d.director_id
+  where d.movie_id = tb.tconst
+) as directors,
+array(
+  select struct(
+    a.actor_id,
+    nb.primary_name
+  )
+  from ${ ref('actors')} as a 
+  inner join ${ ref('name_basics')} as nb on nb.nconst = a.actor_id
+  where a.movie_id = tb.tconst
+) as actors,
+tr.average_rating as rating,
+tr.num_votes as votes
+from ${ ref('title_basics' )} as tb
+left outer join ${ ref('title_ratings')} as tr on tr.tconst = tb.tconst
+where tb.title_type = "movie"
